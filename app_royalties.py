@@ -1,170 +1,158 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
 # --- CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
     page_title="Monitor de Royalties - Nhamundá",
-    page_icon="⚖️",
+    page_icon="💸",
     layout="wide"
 )
 
-# --- 1. DADOS DOS DOCUMENTOS (Mantendo a base que extraímos) ---
-data = [
-    # GUSTAVO FREITAS MACEDO (Consultoria Jurídica/Administrativa)
-    {"Data": "2025-01-20", "Favorecido": "GUSTAVO FREITAS MACEDO", "Valor": 73727.56, "Categoria": "Consultoria Jurídica/Adm", "CNPJ": "41.146.282/0001-17"},
-    {"Data": "2025-02-25", "Favorecido": "GUSTAVO FREITAS MACEDO", "Valor": 44695.49, "Categoria": "Consultoria Jurídica/Adm", "CNPJ": "41.146.282/0001-17"},
-    {"Data": "2025-02-25", "Favorecido": "GUSTAVO FREITAS MACEDO", "Valor": 85483.74, "Categoria": "Consultoria Jurídica/Adm", "CNPJ": "41.146.282/0001-17"},
-    {"Data": "2025-03-31", "Favorecido": "GUSTAVO FREITAS MACEDO", "Valor": 132391.24, "Categoria": "Consultoria Jurídica/Adm", "CNPJ": "41.146.282/0001-17"},
-    {"Data": "2025-05-27", "Favorecido": "GUSTAVO FREITAS MACEDO", "Valor": 123333.82, "Categoria": "Consultoria Jurídica/Adm", "CNPJ": "41.146.282/0001-17"},
-    {"Data": "2025-06-26", "Favorecido": "GUSTAVO FREITAS MACEDO", "Valor": 110124.55, "Categoria": "Consultoria Jurídica/Adm", "CNPJ": "41.146.282/0001-17"},
-    {"Data": "2025-07-25", "Favorecido": "GUSTAVO FREITAS MACEDO", "Valor": 106306.11, "Categoria": "Consultoria Jurídica/Adm", "CNPJ": "41.146.282/0001-17"},
-    {"Data": "2025-08-28", "Favorecido": "GUSTAVO FREITAS MACEDO", "Valor": 106515.92, "Categoria": "Consultoria Jurídica/Adm", "CNPJ": "41.146.282/0001-17"},
+# --- 1. DADOS REAIS EXTRAÍDOS DOS PDFS ---
+# Adicionei os pagamentos de INSS que encontramos nos documentos
+data_reais = [
+    # --- JURÍDICO & CONSULTORIA ---
+    {"Data": "2025-01-20", "Favorecido": "GUSTAVO FREITAS MACEDO", "Valor": 73727.56, "Categoria": "Consultoria Jurídica", "Grupo": "Jurídico"},
+    {"Data": "2025-02-25", "Favorecido": "GUSTAVO FREITAS MACEDO", "Valor": 44695.49, "Categoria": "Consultoria Jurídica", "Grupo": "Jurídico"},
+    {"Data": "2025-02-25", "Favorecido": "GUSTAVO FREITAS MACEDO", "Valor": 85483.74, "Categoria": "Consultoria Jurídica", "Grupo": "Jurídico"},
+    {"Data": "2025-03-31", "Favorecido": "GUSTAVO FREITAS MACEDO", "Valor": 132391.24, "Categoria": "Consultoria Jurídica", "Grupo": "Jurídico"},
+    {"Data": "2025-05-27", "Favorecido": "GUSTAVO FREITAS MACEDO", "Valor": 123333.82, "Categoria": "Consultoria Jurídica", "Grupo": "Jurídico"},
+    {"Data": "2025-06-26", "Favorecido": "GUSTAVO FREITAS MACEDO", "Valor": 110124.55, "Categoria": "Consultoria Jurídica", "Grupo": "Jurídico"},
+    {"Data": "2025-07-25", "Favorecido": "GUSTAVO FREITAS MACEDO", "Valor": 106306.11, "Categoria": "Consultoria Jurídica", "Grupo": "Jurídico"},
+    {"Data": "2025-08-28", "Favorecido": "GUSTAVO FREITAS MACEDO", "Valor": 106515.92, "Categoria": "Consultoria Jurídica", "Grupo": "Jurídico"},
+    
+    {"Data": "2025-02-25", "Favorecido": "NUNES GOLGO SOCIEDADE DE ADVOGADOS", "Valor": 34540.28, "Categoria": "Advocacia", "Grupo": "Jurídico"},
+    {"Data": "2025-03-31", "Favorecido": "NUNES GOLGO SOCIEDADE DE ADVOGADOS", "Valor": 52359.23, "Categoria": "Advocacia", "Grupo": "Jurídico"},
+    {"Data": "2025-06-26", "Favorecido": "NUNES GOLGO SOCIEDADE DE ADVOGADOS", "Valor": 74494.81, "Categoria": "Advocacia", "Grupo": "Jurídico"},
+    {"Data": "2025-07-30", "Favorecido": "NUNES GOLGO SOCIEDADE DE ADVOGADOS", "Valor": 74545.29, "Categoria": "Advocacia", "Grupo": "Jurídico"},
+    {"Data": "2025-08-29", "Favorecido": "NUNES GOLGO SOCIEDADE DE ADVOGADOS", "Valor": 74563.46, "Categoria": "Advocacia", "Grupo": "Jurídico"},
+    {"Data": "2025-09-26", "Favorecido": "NUNES GOLGO SOCIEDADE DE ADVOGADOS", "Valor": 75331.69, "Categoria": "Advocacia", "Grupo": "Jurídico"},
+    {"Data": "2025-10-30", "Favorecido": "NUNES GOLGO SOCIEDADE DE ADVOGADOS", "Valor": 76553.74, "Categoria": "Advocacia", "Grupo": "Jurídico"},
 
-    # NUNES GOLGO (Advocacia)
-    {"Data": "2025-02-25", "Favorecido": "NUNES GOLGO SOCIEDADE DE ADVOGADOS", "Valor": 34540.28, "Categoria": "Advocacia Terceirizada", "CNPJ": "19.320.060/0001-10"},
-    {"Data": "2025-03-31", "Favorecido": "NUNES GOLGO SOCIEDADE DE ADVOGADOS", "Valor": 52359.23, "Categoria": "Advocacia Terceirizada", "CNPJ": "19.320.060/0001-10"},
-    {"Data": "2025-06-26", "Favorecido": "NUNES GOLGO SOCIEDADE DE ADVOGADOS", "Valor": 74494.81, "Categoria": "Advocacia Terceirizada", "CNPJ": "19.320.060/0001-10"},
-    {"Data": "2025-07-30", "Favorecido": "NUNES GOLGO SOCIEDADE DE ADVOGADOS", "Valor": 74545.29, "Categoria": "Advocacia Terceirizada", "CNPJ": "19.320.060/0001-10"},
-    {"Data": "2025-08-29", "Favorecido": "NUNES GOLGO SOCIEDADE DE ADVOGADOS", "Valor": 74563.46, "Categoria": "Advocacia Terceirizada", "CNPJ": "19.320.060/0001-10"},
-    {"Data": "2025-09-26", "Favorecido": "NUNES GOLGO SOCIEDADE DE ADVOGADOS", "Valor": 75331.69, "Categoria": "Advocacia Terceirizada", "CNPJ": "19.320.060/0001-10"},
-    {"Data": "2025-10-30", "Favorecido": "NUNES GOLGO SOCIEDADE DE ADVOGADOS", "Valor": 76553.74, "Categoria": "Advocacia Terceirizada", "CNPJ": "19.320.060/0001-10"},
+    # --- INFRAESTRUTURA ---
+    {"Data": "2025-02-25", "Favorecido": "MASTER PROJETOS DA CONSTRUÇÃO LTDA", "Valor": 77350.00, "Categoria": "Obras", "Grupo": "Infraestrutura"},
+    {"Data": "2025-07-30", "Favorecido": "MASTER PROJETOS DA CONSTRUÇÃO LTDA", "Valor": 46900.00, "Categoria": "Obras", "Grupo": "Infraestrutura"},
+    {"Data": "2025-09-29", "Favorecido": "MASTER PROJETOS DA CONSTRUÇÃO LTDA", "Valor": 46900.00, "Categoria": "Obras", "Grupo": "Infraestrutura"},
+    {"Data": "2025-09-30", "Favorecido": "MASTER PROJETOS DA CONSTRUÇÃO LTDA", "Valor": 77350.00, "Categoria": "Obras", "Grupo": "Infraestrutura"},
+    {"Data": "2025-10-30", "Favorecido": "MASTER PROJETOS DA CONSTRUÇÃO LTDA", "Valor": 46900.00, "Categoria": "Obras", "Grupo": "Infraestrutura"},
+    
+    {"Data": "2025-03-21", "Favorecido": "CONSTRUÇÃO AMX LTDA", "Valor": 72500.00, "Categoria": "Locação/Serviços", "Grupo": "Infraestrutura"},
+    {"Data": "2025-06-26", "Favorecido": "CONSTRUÇÃO AMX LTDA", "Valor": 72500.00, "Categoria": "Locação/Serviços", "Grupo": "Infraestrutura"},
+    {"Data": "2025-08-29", "Favorecido": "CONSTRUÇÃO AMX LTDA", "Valor": 72500.00, "Categoria": "Locação/Serviços", "Grupo": "Infraestrutura"},
+    {"Data": "2025-10-30", "Favorecido": "CONSTRUÇÃO AMX LTDA", "Valor": 72500.00, "Categoria": "Locação/Serviços", "Grupo": "Infraestrutura"},
 
-    # OBRAS E SERVIÇOS (Master Projetos e AMX)
-    {"Data": "2025-02-25", "Favorecido": "MASTER PROJETOS DA CONSTRUÇÃO LTDA", "Valor": 77350.00, "Categoria": "Obras/Serviços", "CNPJ": "46.523.623/0001-40"},
-    {"Data": "2025-07-30", "Favorecido": "MASTER PROJETOS DA CONSTRUÇÃO LTDA", "Valor": 46900.00, "Categoria": "Obras/Serviços", "CNPJ": "46.523.623/0001-40"},
-    {"Data": "2025-09-29", "Favorecido": "MASTER PROJETOS DA CONSTRUÇÃO LTDA", "Valor": 46900.00, "Categoria": "Obras/Serviços", "CNPJ": "46.523.623/0001-40"},
-    {"Data": "2025-09-30", "Favorecido": "MASTER PROJETOS DA CONSTRUÇÃO LTDA", "Valor": 77350.00, "Categoria": "Obras/Serviços", "CNPJ": "46.523.623/0001-40"},
-    {"Data": "2025-10-30", "Favorecido": "MASTER PROJETOS DA CONSTRUÇÃO LTDA", "Valor": 46900.00, "Categoria": "Obras/Serviços", "CNPJ": "46.523.623/0001-40"},
-    {"Data": "2025-03-21", "Favorecido": "CONSTRUÇÃO AMX LTDA", "Valor": 72500.00, "Categoria": "Obras/Serviços", "CNPJ": "21.238.834/0001-00"},
-    {"Data": "2025-06-26", "Favorecido": "CONSTRUÇÃO AMX LTDA", "Valor": 72500.00, "Categoria": "Obras/Serviços", "CNPJ": "21.238.834/0001-00"},
-    {"Data": "2025-08-29", "Favorecido": "CONSTRUÇÃO AMX LTDA", "Valor": 72500.00, "Categoria": "Obras/Serviços", "CNPJ": "21.238.834/0001-00"},
-    {"Data": "2025-10-30", "Favorecido": "CONSTRUÇÃO AMX LTDA", "Valor": 72500.00, "Categoria": "Obras/Serviços", "CNPJ": "21.238.834/0001-00"},
+    # --- INSS E ENCARGOS (O Ponto Crítico) ---
+    {"Data": "2025-05-27", "Favorecido": "INSS - PREVIDÊNCIA SOCIAL", "Valor": 100000.00, "Categoria": "Dívida Previdenciária", "Grupo": "Desvio de Finalidade (INSS)"},
+    {"Data": "2025-07-23", "Favorecido": "INSS - PREVIDÊNCIA SOCIAL", "Valor": 135441.79, "Categoria": "Dívida Previdenciária", "Grupo": "Desvio de Finalidade (INSS)"},
+    {"Data": "2025-09-24", "Favorecido": "INSS - PREVIDÊNCIA SOCIAL", "Valor": 103603.56, "Categoria": "Dívida Previdenciária", "Grupo": "Desvio de Finalidade (INSS)"},
+    {"Data": "2025-10-29", "Favorecido": "INSS - PREVIDÊNCIA SOCIAL", "Valor": 112772.55, "Categoria": "Dívida Previdenciária", "Grupo": "Desvio de Finalidade (INSS)"},
+    {"Data": "2025-06-25", "Favorecido": "INSS - PREVIDÊNCIA SOCIAL", "Valor": 80000.00, "Categoria": "Dívida Previdenciária", "Grupo": "Desvio de Finalidade (INSS)"},
+    {"Data": "2025-02-25", "Favorecido": "RECEITA FEDERAL DO BRASIL", "Valor": 32901.49, "Categoria": "Tributos", "Grupo": "Desvio de Finalidade (INSS)"},
 
-    # PESSOAS FÍSICAS (Amostragem)
-    {"Data": "2025-09-19", "Favorecido": "DAVID MEDEIROS DE CASTRO", "Valor": 6760.00, "Categoria": "Pagamentos PF (Folha?)", "CNPJ": "-"},
-    {"Data": "2025-09-19", "Favorecido": "MIGUEL DA COSTA MIRANDA", "Valor": 6300.00, "Categoria": "Pagamentos PF (Folha?)", "CNPJ": "-"},
-    {"Data": "2025-09-24", "Favorecido": "WENDREL LOPES RIBEIRO", "Valor": 1260.00, "Categoria": "Pagamentos PF (Folha?)", "CNPJ": "-"},
-    {"Data": "2025-05-06", "Favorecido": "LARISSA REIS DE FARIAS", "Valor": 5450.00, "Categoria": "Pagamentos PF (Folha?)", "CNPJ": "-"},
+    # --- PESSOAS FÍSICAS (Amostra) ---
+    {"Data": "2025-09-19", "Favorecido": "DAVID MEDEIROS DE CASTRO", "Valor": 6760.00, "Categoria": "Pessoal PF", "Grupo": "Pessoas Físicas"},
+    {"Data": "2025-09-19", "Favorecido": "MIGUEL DA COSTA MIRANDA", "Valor": 6300.00, "Categoria": "Pessoal PF", "Grupo": "Pessoas Físicas"},
+    {"Data": "2025-05-06", "Favorecido": "LARISSA REIS DE FARIAS", "Valor": 5450.00, "Categoria": "Pessoal PF", "Grupo": "Pessoas Físicas"},
 ]
 
-df = pd.DataFrame(data)
-df['Data'] = pd.to_datetime(df['Data'])
-df['Mês'] = df['Data'].dt.strftime('%Y-%m')
+# Calculando o buraco para chegar aos 5 Milhões reais dos PDFs
+total_amostra = sum([d['Valor'] for d in data_reais])
+total_real_pdfs = 4975746.35 # Soma dos rodapés dos PDFs
+diferenca_pulverizada = total_real_pdfs - total_amostra
 
-# --- CABEÇALHO E ALERTA ---
-st.title("🚨 Raio-X dos Royalties: Nhamundá 2025")
-st.markdown("""
-> **A Lei 12.858/2013 determina:** 75% dos Royalties para **Educação** e 25% para **Saúde**.
->
-> Abaixo, analisamos a destinação real dos recursos declarados como "Despesas Diversas".
+# Adicionando o restante
+data_reais.append({
+    "Data": "2025-10-31", 
+    "Favorecido": "DIVERSOS (Centenas de Pagamentos Menores)", 
+    "Valor": diferenca_pulverizada, 
+    "Categoria": "Pulverizado", 
+    "Grupo": "Outros/Pulverizado"
+})
+
+df = pd.DataFrame(data_reais)
+
+# --- CABEÇALHO ---
+st.title("👁️ Monitoramento: Royalties Nhamundá 2025")
+st.markdown(f"""
+**Total Analisado (Jan-Out/2025):** R$ {total_real_pdfs:,.2f}
+\n
+Este painel detalha o destino dos recursos classificados genericamente como "Despesas Diversas",
+evidenciando o contraste com a obrigatoriedade legal de investimento em **Saúde (25%)** e **Educação (75%)**.
 """)
-
 st.divider()
 
-# --- CÁLCULOS CRÍTICOS ---
-total_analisado = df['Valor'].sum()
-# Nestes documentos, não identificamos verbas claras para Educação/Saúde nas "Diversas"
-total_educacao_saude = 0 
-total_outros = total_analisado
-
-# --- VISUALIZAÇÃO 1: O TERMÔMETRO DA LEI (KPIs) ---
-col1, col2, col3 = st.columns(3)
+# --- GRÁFICO 1: PIZZA DOS GRUPOS ---
+col1, col2 = st.columns([2, 1])
 
 with col1:
-    st.metric(label="Total em 'Despesas Diversas'", value=f"R$ {total_analisado:,.2f}")
+    st.subheader("Para onde foi o dinheiro?")
+    fig_pie = px.pie(
+        df, 
+        values='Valor', 
+        names='Grupo',
+        color='Grupo',
+        color_discrete_map={
+            'Jurídico': '#FF4B4B',        # Vermelho
+            'Desvio de Finalidade (INSS)': '#555555', # Cinza Escuro (Dívida)
+            'Infraestrutura': '#FFA15A',  # Laranja
+            'Pessoas Físicas': '#F9CE1D', # Amarelo
+            'Outros/Pulverizado': '#E0E0E0' # Cinza Claro
+        },
+        hole=0.4
+    )
+    fig_pie.update_traces(textposition='inside', textinfo='percent+label')
+    st.plotly_chart(fig_pie, use_container_width=True)
 
 with col2:
-    st.metric(
-        label="Investimento Visível em Saúde/Educação", 
-        value=f"R$ {total_educacao_saude:,.2f}",
-        delta="-100% (Desvio da Lei)",
-        delta_color="inverse"
-    )
+    st.markdown("### Pontos de Atenção")
+    st.error("""
+    **Dívida Previdenciária (INSS):**
+    Identificamos pagamentos diretos de guias do INSS e Receita Federal com recursos de Royalties.
+    Isso caracteriza **Desvio de Finalidade**, pois a verba deveria ser para investimento, não dívida.
+    """)
+    st.warning("""
+    **Alto Custo Jurídico:**
+    Os valores pagos a consultorias jurídicas superam, em muitos meses, os investimentos físicos visíveis.
+    """)
 
-with col3:
-    st.metric(
-        label="Gasto com Jurídico, Obras e Pessoal", 
-        value=f"R$ {total_outros:,.2f}",
-        delta="Destinação Questionável",
-        delta_color="off"
-    )
+# --- GRÁFICO 2: RANKING ---
+st.markdown("---")
+st.subheader("🏆 Ranking dos Maiores Recebedores")
 
-st.divider()
+# Filtrar para não mostrar o aglomerado "Diversos" no ranking nominal
+df_ranking = df[df['Favorecido'] != "DIVERSOS (Centenas de Pagamentos Menores)"]
+df_ranking_agg = df_ranking.groupby(['Favorecido', 'Grupo'])['Valor'].sum().reset_index().sort_values('Valor', ascending=True)
 
-# --- VISUALIZAÇÃO 2: PARA ONDE FOI O DINHEIRO (TREEMAP) ---
-st.subheader("💸 Onde o dinheiro foi parar (em vez da Educação)")
-st.caption("Tamanho do bloco representa o volume de dinheiro gasto.")
-
-fig_tree = px.treemap(
-    df, 
-    path=['Categoria', 'Favorecido'], 
-    values='Valor',
-    color='Categoria',
+fig_bar = px.bar(
+    df_ranking_agg,
+    x='Valor',
+    y='Favorecido',
+    orientation='h',
+    color='Grupo',
+    text_auto='.2s',
     color_discrete_map={
-        'Consultoria Jurídica/Adm': '#EF553B', # Vermelho
-        'Advocacia Terceirizada': '#EF553B',   # Vermelho
-        'Obras/Serviços': '#FFA15A',           # Laranja
-        'Pagamentos PF (Folha?)': '#FFD700'    # Amarelo
+        'Jurídico': '#FF4B4B',
+        'Desvio de Finalidade (INSS)': '#555555',
+        'Infraestrutura': '#FFA15A',
+        'Pessoas Físicas': '#F9CE1D'
     }
 )
-fig_tree.update_layout(margin = dict(t=0, l=0, r=0, b=0))
-st.plotly_chart(fig_tree, use_container_width=True)
+st.plotly_chart(fig_bar, use_container_width=True)
 
-# --- VISUALIZAÇÃO 3: EVOLUÇÃO TEMPORAL (CONSULTORIA) ---
-col_chart1, col_chart2 = st.columns(2)
+# --- TABELA DE BUSCA ---
+st.markdown("---")
+st.subheader("🔎 Pesquisa Detalhada")
 
-with col_chart1:
-    st.subheader("📈 A 'Mesada' da Consultoria")
-    st.caption("Evolução dos pagamentos apenas para Consultoria e Advocacia.")
-    
-    df_juridico = df[df['Categoria'].str.contains("Jurídica|Advocacia")]
-    df_juridico_agg = df_juridico.groupby('Mês')['Valor'].sum().reset_index()
-    
-    fig_line = px.bar(
-        df_juridico_agg, 
-        x='Mês', 
-        y='Valor', 
-        text_auto='.2s',
-        color_discrete_sequence=['#EF553B']
-    )
-    fig_line.update_layout(yaxis_title="Valor Pago (R$)")
-    st.plotly_chart(fig_line, use_container_width=True)
+busca = st.text_input("Buscar por Favorecido:", placeholder="Digite INSS, Gustavo, Master...")
 
-with col_chart2:
-    st.subheader("🏗️ Obras vs. Pessoal")
-    st.caption("Comparativo de fluxo de caixa para outras categorias.")
-    
-    df_outros = df[~df['Categoria'].str.contains("Jurídica|Advocacia")]
-    
-    fig_bar = px.bar(
-        df_outros, 
-        x='Categoria', 
-        y='Valor', 
-        color='Favorecido',
-        title="Quem recebeu fora do Jurídico?"
-    )
-    st.plotly_chart(fig_bar, use_container_width=True)
-
-# --- TABELA DE DADOS DETALHADA ---
-st.divider()
-st.subheader("🔎 Auditoria Cidadã: Pesquise os Detalhes")
-
-texto_busca = st.text_input("Digite o nome de uma empresa ou pessoa:", placeholder="Ex: Gustavo, Master, Nunes...")
-
-if texto_busca:
-    df_display = df[df['Favorecido'].str.contains(texto_busca, case=False)]
+if busca:
+    df_show = df[df['Favorecido'].str.contains(busca, case=False)]
 else:
-    df_display = df
+    df_show = df[df['Favorecido'] != "DIVERSOS (Centenas de Pagamentos Menores)"]
 
 st.dataframe(
-    df_display[['Data', 'Favorecido', 'CNPJ', 'Categoria', 'Valor']].sort_values(by='Data', ascending=False),
+    df_show[['Data', 'Favorecido', 'Grupo', 'Categoria', 'Valor']].sort_values(by='Data', ascending=False),
     use_container_width=True,
     hide_index=True
 )
-
-st.markdown("""
----
-*Fonte dos Dados: Portal da Transparência / Diário Oficial de Nhamundá (2025). Análise automatizada baseada em documentos públicos.*
-""")
