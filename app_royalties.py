@@ -112,4 +112,5 @@ st.plotly_chart(fig_bar, use_container_width=True)
 st.warning("""
 ⚠️ **Nota de Transparência:** Pela Lei 12.858/2013, 75% dos royalties deveriam ir para **Educação** e 25% para **Saúde**. Os dados acima mostram predominância de gastos com **Consultoria Jurídica, 
 Construção Civil e Pessoas Físicas**.
+
 """)
